@@ -1,60 +1,57 @@
-def tiempo_caminar(calle, carrera, persona=True):
-    if carrera in [12,13,14]:
-        if persona:
-            tiempo_cuadra = 6
-        else:
-            tiempo_cuadra = 8
+import heapq
+from grafo import create_graph  # Importar el grafo corregido
+from utilidades import tiempo_caminar  # Importar tiempo_caminar
 
-    elif calle == 51:
-        if persona:
-            tiempo_cuadra = 8
-        else:
-            tiempo_cuadra = 10
-    else:
-        if persona:
-            tiempo_cuadra = 4
-        else:
-            tiempo_cuadra = 6
-    return tiempo_cuadra
 
-def calcular_tiempo_total(inicial, destino, persona=True):
-    x_inicial, y_inicial = inicial #(calle, carrera)
-    x_destino, y_destino = destino #(calle, carrera)
+def dijkstra_with_paths(start, graph):
+    queue = []
+    heapq.heappush(queue, (0, start, [start]))
+    distances = {start: 0}
+    paths = {start: [start]}
 
-    dist_calle = abs(x_destino - x_inicial)
-    dist_carrera = abs(y_destino - y_inicial)
+    while queue:
+        current_distance, current_node, current_path = heapq.heappop(queue)
 
-    tiempo_total = (dist_calle*tiempo_caminar(x_inicial, y_inicial, persona) + dist_carrera*tiempo_caminar(x_destino, y_destino, persona))
+        if current_distance > distances.get(current_node, float("inf")):
+            continue
 
-    return tiempo_total
+        for neighbor, time in graph[current_node].items():
+            distance = current_distance + time
+            if distance < distances.get(neighbor, float("inf")):
+                distances[neighbor] = distance
+                paths[neighbor] = current_path + [neighbor]
+                heapq.heappush(queue, (distance, neighbor, current_path + [neighbor]))
+
+    return distances, paths
+
 
 def encontrar_trayectoria(establecimiento):
     destinos = {
         "Discoteca The Darkness": (50, 14),
         "Bar La Pasión": (54, 11),
-        "Cervecería Mi Rolita": (50, 12)
+        "Cervecería Mi Rolita": (50, 12),
     }
 
-    posicion_javier = (54, 14)
-    posicion_andreina = (52, 13)
-
+    city_graph = create_graph()
     destino = destinos[establecimiento]
 
-    tiempo_javier = calcular_tiempo_total(posicion_javier, destino, persona=True)
-    tiempo_andreina = calcular_tiempo_total(posicion_andreina, destino, persona=False)
+    # Ejecutar Dijkstra para Javier
+    javier_distances, javier_paths = dijkstra_with_paths((54, 14), city_graph)
+    tiempo_javier = javier_distances[destino]
+    ruta_javier = javier_paths[destino]
+
+    # Ejecutar Dijkstra para Andreína
+    andreina_distances, andreina_paths = dijkstra_with_paths((52, 13), city_graph)
+    tiempo_andreina = andreina_distances[destino]
+    ruta_andreina = andreina_paths[destino]
 
     if tiempo_javier > tiempo_andreina:
-        # Javier tarda más
-        tiempo_diferencia = tiempo_javier - tiempo_andreina
-        tiempo_javier_salida = tiempo_diferencia
+        tiempo_javier_salida = tiempo_javier - tiempo_andreina
         tiempo_andreina_salida = 0
     elif tiempo_andreina > tiempo_javier:
-        # Andreína tarda más
-        tiempo_diferencia = tiempo_andreina - tiempo_javier
-        tiempo_andreina_salida = tiempo_diferencia
+        tiempo_andreina_salida = tiempo_andreina - tiempo_javier
         tiempo_javier_salida = 0
     else:
-        tiempo_javier_salida = 0
-        tiempo_andreina_salida = 0
+        tiempo_javier_salida = tiempo_andreina_salida = 0
 
-    return (tiempo_javier, tiempo_andreina, tiempo_javier_salida, tiempo_andreina_salida)
+    return tiempo_javier, tiempo_andreina, tiempo_javier_salida, tiempo_andreina_salida, ruta_javier, ruta_andreina

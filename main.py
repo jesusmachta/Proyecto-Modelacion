@@ -1,38 +1,187 @@
-from funciones import *
+from tkinter import *
+from tkinter import ttk
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import networkx as nx
+from funciones import encontrar_trayectoria  
+import matplotlib.image as mpimg
 
-def main():
-    print("Bienvenido al sistema de planificación de salidas de Javier y Andreina.")
-    while True:
-        establecimiento = int(input("Ingrese el número del establecimiento que desea visitar:\n1- Bar La Pasión\n2- Discoteca The Darkness\n3- Cervecería Mi Rolita\n4- Salir\n=> "))
-        print("\n")
-        if establecimiento == 1:
-            establecimiento = "Bar La Pasión"
-        elif establecimiento == 2:
-            establecimiento = "Discoteca The Darkness"
-        elif establecimiento == 3:
-            establecimiento = "Cervecería Mi Rolita"
-        elif establecimiento == 4:
-            print("Gracias por usar el sistema de planificación de salidas de Javier y Andreina.")
-            break
-        else:
-            print("Establecimiento no válido.")
-            print("\n")
-            continue
-        
-        resultados = encontrar_trayectoria(establecimiento)
 
-        print(f"Tiempo Javier: {resultados[0]} minutos")
-        print(f"Tiempo Andreína: {resultados[1]} minutos")
-        print("\n")
+def mostrar_resultados(destino):
+    resultados = encontrar_trayectoria(destino)
 
-        if resultados[2] > 0:
-            print(f"Javier debe salir {resultados[2]} minutos antes.")
-            print("\n")
-        elif resultados[3] > 0:
-            print(f"Andreína debe salir {resultados[3]} minutos antes.")
-            print("\n")
-        else:
-            print("Ambos pueden salir al mismo tiempo.")
-            print("\n")
+    # Mostrar resultados de tiempo y diferencias
+    resultado_texto = (
+        f"Destino: {destino}\n"
+        f"Tiempo de Javier: {resultados[0]} minutos\n"
+        f"Tiempo de Andreína: {resultados[1]} minutos\n"
+    )
+    if resultados[2] > 0:
+        resultado_texto += f"Javier debe salir {resultados[2]} minutos antes.\n"
+    elif resultados[3] > 0:
+        resultado_texto += f"Andreína debe salir {resultados[3]} minutos antes.\n"
+    else:
+        resultado_texto += "Ambos pueden salir al mismo tiempo.\n"
 
-main()
+    # Actualizar el texto en la interfaz
+    resultado_label.config(text=resultado_texto)
+
+    # Dibujar los dos grafos
+    fig_javier.clear()
+    fig_andreina.clear()
+
+    ax_javier = fig_javier.add_subplot(111)
+    ax_andreina = fig_andreina.add_subplot(111)
+
+    destino_coords = {
+        "Discoteca The Darkness": (50, 14),
+        "Bar La Pasión": (54, 11),
+        "Cervecería Mi Rolita": (50, 12)
+    }
+
+    dibujar_grafo_javier(ax_javier, resultados[4], destino_coords[destino])  # Ruta de Javier
+    dibujar_grafo_andreina(ax_andreina, resultados[5], destino_coords[destino])  # Ruta de Andreína
+
+    canvas_javier.draw()
+    canvas_andreina.draw()
+
+
+
+def ajustar_posiciones(ruta):
+    # Ajustar las posiciones de los nodos al rango del grafo
+    return [(nodo[0] - 50, nodo[1] - 10) for nodo in ruta]
+
+
+def dibujar_grafo_javier(ax, ruta_javier, destino):
+    # Crear el grafo base
+    grafo = nx.grid_2d_graph(6, 6)  # Cuadrícula (Calles 50-55, Carreras 10-15)
+    pos = {(x, y): (y, -x) for x, y in grafo.nodes()}  # Ajustar las posiciones
+
+    # Ajustar la ruta de Javier
+    ruta_javier = ajustar_posiciones(ruta_javier)
+
+    # Dibujar nodos y aristas base
+    nx.draw(
+        grafo,
+        pos,
+        ax=ax,
+        node_size=500,
+        node_color="lightgrey",
+        edge_color="lightgrey",
+        with_labels=False,
+    )
+
+    # Dibujar nodo inicial (casa de Javier)
+    casa_javier = (54 - 50, 14 - 10)  # Ajustar coordenadas para el grafo
+    casa_icon = mpimg.imread("casa.png")  # Carga la imagen del icono de la casa
+    ax.imshow(
+        casa_icon,
+        extent=[pos[casa_javier][0] - 0.2, pos[casa_javier][0] + 0.2,
+                pos[casa_javier][1] - 0.2, pos[casa_javier][1] + 0.2],
+        zorder=5
+    )
+
+    # Dibujar nodo destino (local)
+    destino_ajustado = (destino[0] - 50, destino[1] - 10)
+    local_icon = mpimg.imread("local.png")  # Carga la imagen del icono del local
+    ax.imshow(
+        local_icon,
+        extent=[pos[destino_ajustado][0] - 0.2, pos[destino_ajustado][0] + 0.2,
+                pos[destino_ajustado][1] - 0.2, pos[destino_ajustado][1] + 0.2],
+        zorder=5
+    )
+
+    # Dibujar ruta de Javier con azul claro
+    if ruta_javier:
+        nx.draw_networkx_nodes(grafo, pos, nodelist=ruta_javier, node_color="#ADD8E6", ax=ax)  # Azul claro
+        javier_edges = [(ruta_javier[i], ruta_javier[i + 1]) for i in range(len(ruta_javier) - 1)]
+        nx.draw_networkx_edges(grafo, pos, edgelist=javier_edges, edge_color="#ADD8E6", width=2, ax=ax)
+
+    ax.set_title("Ruta de Javier")
+
+
+def dibujar_grafo_andreina(ax, ruta_andreina, destino):
+    # Crear el grafo base
+    grafo = nx.grid_2d_graph(6, 6)  # Cuadrícula (Calles 50-55, Carreras 10-15)
+    pos = {(x, y): (y, -x) for x, y in grafo.nodes()}  # Ajustar las posiciones
+
+    # Ajustar la ruta de Andreína
+    ruta_andreina = ajustar_posiciones(ruta_andreina)
+
+    # Dibujar nodos y aristas base
+    nx.draw(
+        grafo,
+        pos,
+        ax=ax,
+        node_size=500,
+        node_color="lightgrey",
+        edge_color="lightgrey",
+        with_labels=False,
+    )
+
+    # Dibujar nodo inicial (casa de Andreína)
+    casa_andreina = (52 - 50, 13 - 10)  # Ajustar coordenadas para el grafo
+    casa_icon = mpimg.imread("casa.png")  # Carga la imagen del icono de la casa
+    ax.imshow(
+        casa_icon,
+        extent=[pos[casa_andreina][0] - 0.2, pos[casa_andreina][0] + 0.2,
+                pos[casa_andreina][1] - 0.2, pos[casa_andreina][1] + 0.2],
+        zorder=5
+    )
+
+    # Dibujar nodo destino (local)
+    destino_ajustado = (destino[0] - 50, destino[1] - 10)
+    local_icon = mpimg.imread("local.png")  # Carga la imagen del icono del local
+    ax.imshow(
+        local_icon,
+        extent=[pos[destino_ajustado][0] - 0.2, pos[destino_ajustado][0] + 0.2,
+                pos[destino_ajustado][1] - 0.2, pos[destino_ajustado][1] + 0.2],
+        zorder=5
+    )
+
+    # Dibujar ruta de Andreína con rosado
+    if ruta_andreina:
+        nx.draw_networkx_nodes(grafo, pos, nodelist=ruta_andreina, node_color="#FF69B4", ax=ax)  # Rosado
+        andreina_edges = [(ruta_andreina[i], ruta_andreina[i + 1]) for i in range(len(ruta_andreina) - 1)]
+        nx.draw_networkx_edges(grafo, pos, edgelist=andreina_edges, edge_color="#FF69B4", width=2, ax=ax)
+
+    ax.set_title("Ruta de Andreína")
+
+
+
+# Crear la interfaz
+root = Tk()
+root.title("Planificación de Salidas de Javier y Andreína")
+
+# Menú para seleccionar destino
+destino_var = StringVar(value="Discoteca The Darkness")
+ttk.Label(root, text="Seleccione el destino:").pack(pady=5)
+destino_menu = ttk.Combobox(
+    root,
+    textvariable=destino_var,
+    values=["Discoteca The Darkness", "Bar La Pasión", "Cervecería Mi Rolita"],
+    state="readonly",
+)
+destino_menu.pack(pady=5)
+
+# Botón para calcular resultados
+ttk.Button(
+    root, text="Calcular", command=lambda: mostrar_resultados(destino_var.get())
+).pack(pady=10)
+
+# Área para mostrar resultados
+resultado_label = Label(root, text="", justify="left", font=("Arial", 12))
+resultado_label.pack(pady=10)
+
+# Área para grafo de Javier
+fig_javier, ax_javier = plt.subplots(figsize=(5, 5))
+canvas_javier = FigureCanvasTkAgg(fig_javier, master=root)
+canvas_javier.get_tk_widget().pack(side=LEFT, padx=10, pady=10)
+
+# Área para grafo de Andreína
+fig_andreina, ax_andreina = plt.subplots(figsize=(5, 5))
+canvas_andreina = FigureCanvasTkAgg(fig_andreina, master=root)
+canvas_andreina.get_tk_widget().pack(side=RIGHT, padx=10, pady=10)
+
+# Ejecutar la interfaz
+root.mainloop()
