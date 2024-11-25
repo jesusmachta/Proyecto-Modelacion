@@ -119,7 +119,11 @@ def dibujar_grafo_andreina(ax, ruta_andreina, destino):
     pos = {(x, y): (y - 10, -(x - 50)) for x, y in grafo.nodes()}  # Ajustar posiciones para grafo
 
     # Crear etiquetas reales (Calle y Carrera)
-    etiquetas = {nodo: f"C{nodo[0]} Cr{nodo[1]}" for nodo in grafo.nodes()}
+    etiquetas = {
+        nodo: f"Calle {nodo[0]} Cr{nodo[1]}"
+        for nodo in grafo.nodes()
+        if nodo != (52, 13) and nodo != destino
+    }
 
     # Dibujar nodos y aristas base con etiquetas reales
     nx.draw(
