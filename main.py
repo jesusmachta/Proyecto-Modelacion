@@ -138,7 +138,7 @@ def dibujar_grafo_andreina(ax, ruta_andreina, destino):
         grafo,
         pos,
         labels=etiquetas,
-        font_size=0.5,  
+        font_size=5,  
         font_color="black",
     )
 
