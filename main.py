@@ -46,34 +46,48 @@ def mostrar_resultados(destino):
     canvas_andreina.draw()
 
 
-
-def ajustar_posiciones(ruta):
-    # Ajustar las posiciones de los nodos al rango del grafo
-    return [(nodo[0] - 50, nodo[1] - 10) for nodo in ruta]
+def ajustar_posiciones(nodo):
+    """
+    Transforma las coordenadas originales (calle, carrera) al sistema ajustado del grafo.
+    """
+    return nodo[0] - 50, nodo[1] - 10
 
 
 def dibujar_grafo_javier(ax, ruta_javier, destino):
     # Crear el grafo base
     grafo = nx.grid_2d_graph(6, 6)  # Cuadrícula (Calles 50-55, Carreras 10-15)
-    pos = {(x, y): (y, -x) for x, y in grafo.nodes()}  # Ajustar las posiciones
+    pos = {(x, y): (y - 10, -(x - 50)) for x, y in grafo.nodes()}  # Ajustar posiciones para grafo
 
-    # Ajustar la ruta de Javier
-    ruta_javier = ajustar_posiciones(ruta_javier)
+    # Crear etiquetas reales (Calle y Carrera), excluyendo nodos con íconos
+    etiquetas = {
+        nodo: f"Calle {nodo[0]} Cr{nodo[1]}"
+        for nodo in grafo.nodes()
+        if nodo != (54, 14) and nodo != destino
+    }
 
     # Dibujar nodos y aristas base
     nx.draw(
         grafo,
         pos,
         ax=ax,
-        node_size=500,
+        node_size=400,
         node_color="lightgrey",
         edge_color="lightgrey",
-        with_labels=False,
+    )
+    nx.draw_networkx_labels(
+        grafo,
+        pos,
+        labels=etiquetas,
+        font_size=5,  # Reducir tamaño de la fuente
+        font_color="black",
     )
 
+    # Ajustar ruta de Javier al sistema de referencia
+    ruta_javier = [ajustar_posiciones(nodo) for nodo in ruta_javier]
+
     # Dibujar nodo inicial (casa de Javier)
-    casa_javier = (54 - 50, 14 - 10)  # Ajustar coordenadas para el grafo
-    casa_icon = mpimg.imread("casa.png")  # Carga la imagen del icono de la casa
+    casa_javier = ajustar_posiciones((54, 14))  # Coordenadas reales de la casa
+    casa_icon = mpimg.imread("casa.png")  # Cargar el ícono de la casa
     ax.imshow(
         casa_icon,
         extent=[pos[casa_javier][0] - 0.2, pos[casa_javier][0] + 0.2,
@@ -82,8 +96,8 @@ def dibujar_grafo_javier(ax, ruta_javier, destino):
     )
 
     # Dibujar nodo destino (local)
-    destino_ajustado = (destino[0] - 50, destino[1] - 10)
-    local_icon = mpimg.imread("local.png")  # Carga la imagen del icono del local
+    destino_ajustado = ajustar_posiciones(destino)
+    local_icon = mpimg.imread("local.png")  # Cargar el ícono del local
     ax.imshow(
         local_icon,
         extent=[pos[destino_ajustado][0] - 0.2, pos[destino_ajustado][0] + 0.2,
@@ -91,37 +105,45 @@ def dibujar_grafo_javier(ax, ruta_javier, destino):
         zorder=5
     )
 
-    # Dibujar ruta de Javier con azul claro
+    # Dibujar ruta de Javier
     if ruta_javier:
-        nx.draw_networkx_nodes(grafo, pos, nodelist=ruta_javier, node_color="#ADD8E6", ax=ax)  # Azul claro
-        javier_edges = [(ruta_javier[i], ruta_javier[i + 1]) for i in range(len(ruta_javier) - 1)]
-        nx.draw_networkx_edges(grafo, pos, edgelist=javier_edges, edge_color="#ADD8E6", width=2, ax=ax)
+        nx.draw_networkx_nodes(grafo, pos, nodelist=ruta_javier, node_color="#ADD8E6", ax=ax)
+        edges = [(ruta_javier[i], ruta_javier[i + 1]) for i in range(len(ruta_javier) - 1)]
+        nx.draw_networkx_edges(grafo, pos, edgelist=edges, edge_color="#ADD8E6", width=2, ax=ax)
 
     ax.set_title("Ruta de Javier")
 
 
 def dibujar_grafo_andreina(ax, ruta_andreina, destino):
-    # Crear el grafo base
     grafo = nx.grid_2d_graph(6, 6)  # Cuadrícula (Calles 50-55, Carreras 10-15)
-    pos = {(x, y): (y, -x) for x, y in grafo.nodes()}  # Ajustar las posiciones
+    pos = {(x, y): (y - 10, -(x - 50)) for x, y in grafo.nodes()}  # Ajustar posiciones para grafo
 
-    # Ajustar la ruta de Andreína
-    ruta_andreina = ajustar_posiciones(ruta_andreina)
+    # Crear etiquetas reales (Calle y Carrera)
+    etiquetas = {nodo: f"C{nodo[0]} Cr{nodo[1]}" for nodo in grafo.nodes()}
 
-    # Dibujar nodos y aristas base
+    # Dibujar nodos y aristas base con etiquetas reales
     nx.draw(
         grafo,
         pos,
         ax=ax,
-        node_size=500,
+        node_size=400,
         node_color="lightgrey",
         edge_color="lightgrey",
-        with_labels=False,
+    )
+    nx.draw_networkx_labels(
+        grafo,
+        pos,
+        labels=etiquetas,
+        font_size=0.5,  
+        font_color="black",
     )
 
+    # Ajustar ruta de Andreína al sistema de referencia
+    ruta_andreina = [ajustar_posiciones(nodo) for nodo in ruta_andreina]
+
     # Dibujar nodo inicial (casa de Andreína)
-    casa_andreina = (52 - 50, 13 - 10)  # Ajustar coordenadas para el grafo
-    casa_icon = mpimg.imread("casa.png")  # Carga la imagen del icono de la casa
+    casa_andreina = ajustar_posiciones((52, 13))  # Coordenadas reales de la casa
+    casa_icon = mpimg.imread("casa.png")  # Cargar el ícono de la casa
     ax.imshow(
         casa_icon,
         extent=[pos[casa_andreina][0] - 0.2, pos[casa_andreina][0] + 0.2,
@@ -130,8 +152,8 @@ def dibujar_grafo_andreina(ax, ruta_andreina, destino):
     )
 
     # Dibujar nodo destino (local)
-    destino_ajustado = (destino[0] - 50, destino[1] - 10)
-    local_icon = mpimg.imread("local.png")  # Carga la imagen del icono del local
+    destino_ajustado = ajustar_posiciones(destino)
+    local_icon = mpimg.imread("local.png")  # Cargar el ícono del local
     ax.imshow(
         local_icon,
         extent=[pos[destino_ajustado][0] - 0.2, pos[destino_ajustado][0] + 0.2,
@@ -139,14 +161,13 @@ def dibujar_grafo_andreina(ax, ruta_andreina, destino):
         zorder=5
     )
 
-    # Dibujar ruta de Andreína con rosado
+    # Dibujar ruta de Andreína
     if ruta_andreina:
-        nx.draw_networkx_nodes(grafo, pos, nodelist=ruta_andreina, node_color="#FF69B4", ax=ax)  # Rosado
-        andreina_edges = [(ruta_andreina[i], ruta_andreina[i + 1]) for i in range(len(ruta_andreina) - 1)]
-        nx.draw_networkx_edges(grafo, pos, edgelist=andreina_edges, edge_color="#FF69B4", width=2, ax=ax)
+        nx.draw_networkx_nodes(grafo, pos, nodelist=ruta_andreina, node_color="#FF69B4", ax=ax)
+        edges = [(ruta_andreina[i], ruta_andreina[i + 1]) for i in range(len(ruta_andreina) - 1)]
+        nx.draw_networkx_edges(grafo, pos, edgelist=edges, edge_color="#FF69B4", width=2, ax=ax)
 
     ax.set_title("Ruta de Andreína")
-
 
 
 # Crear la interfaz
@@ -174,14 +195,14 @@ resultado_label = Label(root, text="", justify="left", font=("Arial", 12))
 resultado_label.pack(pady=10)
 
 # Área para grafo de Javier
-fig_javier, ax_javier = plt.subplots(figsize=(5, 5))
+fig_javier, ax_javier = plt.subplots(figsize=(3, 3))
 canvas_javier = FigureCanvasTkAgg(fig_javier, master=root)
-canvas_javier.get_tk_widget().pack(side=LEFT, padx=10, pady=10)
+canvas_javier.get_tk_widget().pack(side=LEFT, padx=2, pady=10)
 
 # Área para grafo de Andreína
-fig_andreina, ax_andreina = plt.subplots(figsize=(5, 5))
+fig_andreina, ax_andreina = plt.subplots(figsize=(3, 3))
 canvas_andreina = FigureCanvasTkAgg(fig_andreina, master=root)
-canvas_andreina.get_tk_widget().pack(side=RIGHT, padx=10, pady=10)
+canvas_andreina.get_tk_widget().pack(side=RIGHT, padx=2, pady=10)
 
 # Ejecutar la interfaz
 root.mainloop()
