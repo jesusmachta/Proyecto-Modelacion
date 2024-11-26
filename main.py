@@ -27,7 +27,7 @@ class MainWindow(QMainWindow):
         self.label_titulo.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(self.label_titulo)
 
-        # Contenedor para el dropdown y el botón
+        # Contenedor para el dropdown y los botones
         self.dropdown_layout = QHBoxLayout()
         self.dropdown_layout.setAlignment(Qt.AlignCenter)
 
@@ -45,7 +45,14 @@ class MainWindow(QMainWindow):
         self.button_calcular.clicked.connect(self.calcular_ruta)
         self.dropdown_layout.addWidget(self.button_calcular)
 
-        # Agregar dropdown y botón al layout principal
+        # Botón 'ver unión'
+        self.button_union = QPushButton("Ver Unión", self)
+        self.button_union.setStyleSheet("font-size: 12px; padding: 5px; background-color: #FF69B4; color: #FFFFFF; border-radius: 5px;")
+        self.button_union.setFixedWidth(200)
+        self.button_union.clicked.connect(self.abrir_union)
+        self.dropdown_layout.addWidget(self.button_union)
+
+        # Agregar dropdown y botones al layout principal
         self.layout.addLayout(self.dropdown_layout)
 
         # Resultados
@@ -96,6 +103,13 @@ class MainWindow(QMainWindow):
         self.dibujar_grafo(self.fig_javier, self.canvas_javier, resultados[4], destino_coords[destino], "Ruta de Javier", "#B3E5FC")
         self.dibujar_grafo(self.fig_andreina, self.canvas_andreina, resultados[5], destino_coords[destino], "Ruta de Andreína", "#FFCDD2")
 
+        # Guardar resultados para la unión
+        self.resultados_union = resultados
+
+    def abrir_union(self):
+        self.union_window = UnionWindow(self.resultados_union)
+        self.union_window.show()
+
     def dibujar_grafo(self, fig, canvas, ruta, destino, titulo, color):
         fig.clear()
         ax = fig.add_subplot(111)
@@ -104,27 +118,14 @@ class MainWindow(QMainWindow):
         grafo = nx.grid_2d_graph(6, 6)  # Calles 50-55, Carreras 10-15
         pos = {(x, y): (y - 10, -(x - 50)) for x, y in grafo.nodes()}  # Ajustar posiciones
 
-        # Crear etiquetas de las calles y carreras
-        etiquetas = {
-            nodo: f"Calle {nodo[0]} Cr{nodo[1]}"
-            for nodo in grafo.nodes()
-        }
-
-        # Dibujar nodos y aristas base con etiquetas reales
+        # Dibujar nodos y aristas base
         nx.draw(
             grafo,
             pos,
             ax=ax,
-            node_size=700, 
+            node_size=700,
             node_color="lightgrey",
             edge_color="lightgrey",
-        )
-        nx.draw_networkx_labels(
-            grafo,
-            pos,
-            labels=etiquetas,
-            font_size=8,  
-            font_color="black",
         )
 
         # Dibujar íconos de inicio y destino
@@ -155,7 +156,117 @@ class MainWindow(QMainWindow):
             edges = [(ruta_ajustada[i], ruta_ajustada[i + 1]) for i in range(len(ruta_ajustada) - 1)]
             nx.draw_networkx_edges(grafo, pos, edgelist=edges, edge_color=color, width=2, ax=ax)
 
-        ax.set_title(titulo, fontsize=12)  
+        # Agregar etiquetas de calles y carreras en los bordes
+        for x in range(50, 56):
+            ax.text(-1.2, -(x - 50), f'C{x}', ha='right', va='center', fontsize=10, color='black')
+            ax.text(6.2, -(x - 50), f'C{x}', ha='left', va='center', fontsize=10, color='black')
+        for y in range(10, 16):
+            ax.text(y - 10, 1.2, f'Cr{y}', ha='center', va='bottom', fontsize=10, color='black')
+            ax.text(y - 10, -6.2, f'Cr{y}', ha='center', va='top', fontsize=10, color='black')
+
+        ax.set_title(titulo, fontsize=12)
+        ax.axis("off")
+        canvas.draw()
+
+
+class UnionWindow(QMainWindow):
+    def __init__(self, resultados):
+        super().__init__()
+        self.setWindowTitle("Unión de Rutas de Javier y Andreína")
+        self.setGeometry(150, 150, 800, 600)
+
+        # Widget principal
+        self.central_widget = QWidget(self)
+        self.setCentralWidget(self.central_widget)
+
+        # Layout principal
+        self.layout = QVBoxLayout(self.central_widget)
+
+        # Gráfico para la unión de las rutas
+        self.fig_union = Figure(figsize=(7, 7))
+        self.canvas_union = FigureCanvas(self.fig_union)
+        self.layout.addWidget(self.canvas_union)
+
+        # Dibujar la unión de las rutas
+        self.dibujar_union(resultados)
+
+    def dibujar_union(self, resultados):
+        fig = self.fig_union
+        canvas = self.canvas_union
+        fig.clear()
+        ax = fig.add_subplot(111)
+
+        # Crear el grafo base
+        grafo = nx.grid_2d_graph(6, 6)  # Calles 50-55, Carreras 10-15
+        pos = {(x, y): (y - 10, -(x - 50)) for x, y in grafo.nodes()}  # Ajustar posiciones
+
+        # Dibujar nodos y aristas base
+        nx.draw(
+            grafo,
+            pos,
+            ax=ax,
+            node_size=700,
+            node_color="lightgrey",
+            edge_color="lightgrey",
+        )
+
+        # Dibujar íconos de inicio y destino
+        casa_icon = mpimg.imread("casa.png")
+        local_icon = mpimg.imread("local.png")
+
+        casa_inicio_javier = (54, 14)
+        casa_inicio_andreina = (52, 13)
+        destino = resultados[4][-1]  # Último nodo de la ruta de Javier (o Andreína)
+
+        casa_inicio_javier = (casa_inicio_javier[0] - 50, casa_inicio_javier[1] - 10)
+        casa_inicio_andreina = (casa_inicio_andreina[0] - 50, casa_inicio_andreina[1] - 10)
+        destino_ajustado = (destino[0] - 50, destino[1] - 10)
+
+        ax.imshow(
+            casa_icon,
+            extent=[pos[casa_inicio_javier][0] - 0.2, pos[casa_inicio_javier][0] + 0.2,
+                    pos[casa_inicio_javier][1] - 0.2, pos[casa_inicio_javier][1] + 0.2],
+            zorder=5
+        )
+        ax.imshow(
+            casa_icon,
+            extent=[pos[casa_inicio_andreina][0] - 0.2, pos[casa_inicio_andreina][0] + 0.2,
+                    pos[casa_inicio_andreina][1] - 0.2, pos[casa_inicio_andreina][1] + 0.2],
+            zorder=5
+        )
+        ax.imshow(
+            local_icon,
+            extent=[pos[destino_ajustado][0] - 0.2, pos[destino_ajustado][0] + 0.2,
+                    pos[destino_ajustado][1] - 0.2, pos[destino_ajustado][1] + 0.2],
+            zorder=5
+        )
+
+        # Dibujar rutas de Javier y Andreína
+        ruta_javier = resultados[4]
+        ruta_andreina = resultados[5]
+        ruta_javier_ajustada = [(n[0] - 50, n[1] - 10) for n in ruta_javier]
+        ruta_andreina_ajustada = [(n[0] - 50, n[1] - 10) for n in ruta_andreina]
+
+        if ruta_javier_ajustada:
+            nx.draw_networkx_nodes(grafo, pos, nodelist=ruta_javier_ajustada, node_color="#B3E5FC", ax=ax)
+            edges_javier = [(ruta_javier_ajustada[i], ruta_javier_ajustada[i + 1]) for i in range(len(ruta_javier_ajustada) - 1)]
+            nx.draw_networkx_edges(grafo, pos, edgelist=edges_javier, edge_color="#B3E5FC", width=2, ax=ax)
+
+        if ruta_andreina_ajustada:
+            nx.draw_networkx_nodes(grafo, pos, nodelist=ruta_andreina_ajustada, node_color="#FFCDD2", ax=ax)
+            edges_andreina = [(ruta_andreina_ajustada[i], ruta_andreina_ajustada[i + 1]) for i in range(len(ruta_andreina_ajustada) - 1)]
+            nx.draw_networkx_edges(grafo, pos, edgelist=edges_andreina, edge_color="#FFCDD2", width=2, ax=ax)
+
+        # Agregar etiquetas de calles y carreras en los bordes
+        for x in range(50, 56):
+            ax.text(-1.2, -(x - 50), f'C{x}', ha='right', va='center', fontsize=10, color='black')
+            ax.text(6.2, -(x - 50), f'C{x}', ha='left', va='center', fontsize=10, color='black')
+        for y in range(10, 16):
+            ax.text(y - 10, 1.2, f'Cr{y}', ha='center', va='bottom', fontsize=10, color='black')
+            ax.text(y - 10, -6.2, f'Cr{y}', ha='center', va='top', fontsize=10, color='black')
+
+        ax.set_title("Unión de Rutas de Javier y Andreína", fontsize=12)
+        ax.axis("off")
         canvas.draw()
 
 
