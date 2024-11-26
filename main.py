@@ -70,6 +70,8 @@ class MainWindow(QMainWindow):
         self.canvas_andreina = FigureCanvas(self.fig_andreina)
         self.layout.addWidget(self.canvas_andreina)
 
+        self.resultados_union = None
+
     def calcular_ruta(self):
         destino = self.combo_destino.currentText()
 
@@ -107,8 +109,11 @@ class MainWindow(QMainWindow):
         self.resultados_union = resultados
 
     def abrir_union(self):
-        self.union_window = UnionWindow(self.resultados_union)
-        self.union_window.show()
+        if self.resultados_union is None:   # Si no hay resultados, no se puede abrir la ventana de unión
+            self.label_resultados.setText("Primero debes calcular las rutas de Javier y Andreína.") 
+        else: 
+            self.union_window = UnionWindow(self.resultados_union)
+            self.union_window.show()
 
     def dibujar_grafo(self, fig, canvas, ruta, destino, titulo, color):
         fig.clear()
@@ -157,8 +162,12 @@ class MainWindow(QMainWindow):
             nx.draw_networkx_edges(grafo, pos, edgelist=edges, edge_color=color, width=2, ax=ax)
 
         # Agregar etiquetas dentro de los nodos
-        etiquetas = {(x, y): f"C{x},Cr{y}" for x, y in grafo.nodes()}
-        nx.draw_networkx_labels(grafo, pos, etiquetas, font_color='black', font_size=8, ax=ax)
+        etiquetas = {(x, y): f"C{x+50},Cr{y+10}" for x, y in grafo.nodes() if (x, y) != casa_inicio and (x, y) != destino_ajustado}
+        nx.draw_networkx_labels(grafo, pos, etiquetas, font_color='black', font_size=6, ax=ax)
+
+        # Agregar etiquetas dentro de los nodos ruta
+        #labels = {(x, y): f"C{x+50},Cr{y+10}" for x, y in grafo.nodes() if (x,y) != casa_inicio and (x, y) != destino_ajustado and (x, y) in ruta_ajustada}
+        #nx.draw_networkx_labels(grafo, pos, labels, font_color='black', font_size=6, ax=ax)
         
         # Agregar etiquetas de calles y carreras en los bordes
         for x in range(50, 56):
@@ -261,10 +270,15 @@ class UnionWindow(QMainWindow):
             edges_andreina = [(ruta_andreina_ajustada[i], ruta_andreina_ajustada[i + 1]) for i in range(len(ruta_andreina_ajustada) - 1)]
             nx.draw_networkx_edges(grafo, pos, edgelist=edges_andreina, edge_color="#FFCDD2", width=2, ax=ax)
 
-        # Agregar etiquetas dentro de los nodos
-        etiquetas = {(x, y): f"C{x},Cr{y}" for x, y in grafo.nodes()}
-        nx.draw_networkx_labels(grafo, pos, etiquetas, font_color='black', font_size=8, ax=ax)
-        
+        # Agregar etiquetas de calles y carreras en los nodos
+        etiquetas = {(x, y): f"C{x+50},Cr{y+10}" for x, y in grafo.nodes() if (x, y) != casa_inicio_andreina and (x, y) != destino_ajustado and (x, y) != casa_inicio_javier}
+        nx.draw_networkx_labels(grafo, pos, etiquetas, font_color='black', font_size=6, ax=ax)
+
+        # Agregar etiquetas dentro de los nodos ruta
+        #etiquetas = {(x, y): f"C{x+50},Cr{y+10}" for x, y in grafo.nodes() if (x,y) != casa_inicio_andreina and (x, y) != destino_ajustado and (x, y) != casa_inicio_javier and ((x, y) in ruta_javier_ajustada or (x, y) in ruta_andreina_ajustada)}
+        #nx.draw_networkx_labels(grafo, pos, etiquetas, font_color='black', font_size=6, ax=ax)
+
+
         # Agregar etiquetas de calles y carreras en los bordes
         for x in range(50, 56):
             ax.text(-1.2, -(x - 50), f'C{x}', ha='right', va='center', fontsize=10, color='black')
