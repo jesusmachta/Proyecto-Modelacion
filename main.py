@@ -156,6 +156,10 @@ class MainWindow(QMainWindow):
             edges = [(ruta_ajustada[i], ruta_ajustada[i + 1]) for i in range(len(ruta_ajustada) - 1)]
             nx.draw_networkx_edges(grafo, pos, edgelist=edges, edge_color=color, width=2, ax=ax)
 
+        # Agregar etiquetas dentro de los nodos
+        etiquetas = {(x, y): f"C{x},Cr{y}" for x, y in grafo.nodes()}
+        nx.draw_networkx_labels(grafo, pos, etiquetas, font_color='black', font_size=8, ax=ax)
+        
         # Agregar etiquetas de calles y carreras en los bordes
         for x in range(50, 56):
             ax.text(-1.2, -(x - 50), f'C{x}', ha='right', va='center', fontsize=10, color='black')
@@ -257,6 +261,10 @@ class UnionWindow(QMainWindow):
             edges_andreina = [(ruta_andreina_ajustada[i], ruta_andreina_ajustada[i + 1]) for i in range(len(ruta_andreina_ajustada) - 1)]
             nx.draw_networkx_edges(grafo, pos, edgelist=edges_andreina, edge_color="#FFCDD2", width=2, ax=ax)
 
+        # Agregar etiquetas dentro de los nodos
+        etiquetas = {(x, y): f"C{x},Cr{y}" for x, y in grafo.nodes()}
+        nx.draw_networkx_labels(grafo, pos, etiquetas, font_color='black', font_size=8, ax=ax)
+        
         # Agregar etiquetas de calles y carreras en los bordes
         for x in range(50, 56):
             ax.text(-1.2, -(x - 50), f'C{x}', ha='right', va='center', fontsize=10, color='black')
