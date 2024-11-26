@@ -17,6 +17,7 @@ class MainWindow(QMainWindow):
         # Widget principal
         self.central_widget = QWidget(self)
         self.setCentralWidget(self.central_widget)
+        self.central_widget.setStyleSheet("background-color: gray;")
 
         # Layout principal
         self.layout = QVBoxLayout(self.central_widget)
@@ -30,17 +31,17 @@ class MainWindow(QMainWindow):
         # Contenedor para el dropdown y los botones
         self.dropdown_layout = QHBoxLayout()
         self.dropdown_layout.setAlignment(Qt.AlignCenter)
-
+ 
         # Dropdown
         self.combo_destino = QComboBox(self)
         self.combo_destino.addItems(["Discoteca The Darkness", "Bar La Pasión", "Cervecería Mi Rolita"])
-        self.combo_destino.setStyleSheet("font-size: 12px; padding: 5px;")
+        self.combo_destino.setStyleSheet("font-size: 12px; padding: 5px; background-color: white; border-radius: 5px;")
         self.combo_destino.setFixedWidth(300)
         self.dropdown_layout.addWidget(self.combo_destino)
 
         # Botón 'calcular' 
         self.button_calcular = QPushButton("Calcular", self)
-        self.button_calcular.setStyleSheet("font-size: 12px; padding: 5px;")
+        self.button_calcular.setStyleSheet("font-size: 12px; padding: 5px;color: #FFFFFF; background-color: #FF69B4; border-radius: 5px;")
         self.button_calcular.setFixedWidth(200)
         self.button_calcular.clicked.connect(self.calcular_ruta)
         self.dropdown_layout.addWidget(self.button_calcular)
@@ -110,7 +111,8 @@ class MainWindow(QMainWindow):
 
     def abrir_union(self):
         if self.resultados_union is None:   # Si no hay resultados, no se puede abrir la ventana de unión
-            self.label_resultados.setText("Primero debes calcular las rutas de Javier y Andreína.") 
+            self.label_resultados.setText("Primero debes calcular las rutas de Javier y Andreína.")
+            self.label_resultados.setStyleSheet("font-size: 12px; color: white;") 
         else: 
             self.union_window = UnionWindow(self.resultados_union)
             self.union_window.show()
@@ -168,14 +170,6 @@ class MainWindow(QMainWindow):
         # Agregar etiquetas dentro de los nodos ruta
         #labels = {(x, y): f"C{x+50},Cr{y+10}" for x, y in grafo.nodes() if (x,y) != casa_inicio and (x, y) != destino_ajustado and (x, y) in ruta_ajustada}
         #nx.draw_networkx_labels(grafo, pos, labels, font_color='black', font_size=6, ax=ax)
-        
-        # Agregar etiquetas de calles y carreras en los bordes
-        for x in range(50, 56):
-            ax.text(-1.2, -(x - 50), f'C{x}', ha='right', va='center', fontsize=10, color='black')
-            ax.text(6.2, -(x - 50), f'C{x}', ha='left', va='center', fontsize=10, color='black')
-        for y in range(10, 16):
-            ax.text(y - 10, 1.2, f'Cr{y}', ha='center', va='bottom', fontsize=10, color='black')
-            ax.text(y - 10, -6.2, f'Cr{y}', ha='center', va='top', fontsize=10, color='black')
 
         ax.set_title(titulo, fontsize=12)
         ax.axis("off")
@@ -277,15 +271,6 @@ class UnionWindow(QMainWindow):
         # Agregar etiquetas dentro de los nodos ruta
         #etiquetas = {(x, y): f"C{x+50},Cr{y+10}" for x, y in grafo.nodes() if (x,y) != casa_inicio_andreina and (x, y) != destino_ajustado and (x, y) != casa_inicio_javier and ((x, y) in ruta_javier_ajustada or (x, y) in ruta_andreina_ajustada)}
         #nx.draw_networkx_labels(grafo, pos, etiquetas, font_color='black', font_size=6, ax=ax)
-
-
-        # Agregar etiquetas de calles y carreras en los bordes
-        for x in range(50, 56):
-            ax.text(-1.2, -(x - 50), f'C{x}', ha='right', va='center', fontsize=10, color='black')
-            ax.text(6.2, -(x - 50), f'C{x}', ha='left', va='center', fontsize=10, color='black')
-        for y in range(10, 16):
-            ax.text(y - 10, 1.2, f'Cr{y}', ha='center', va='bottom', fontsize=10, color='black')
-            ax.text(y - 10, -6.2, f'Cr{y}', ha='center', va='top', fontsize=10, color='black')
 
         ax.set_title("Unión de Rutas de Javier y Andreína", fontsize=12)
         ax.axis("off")
